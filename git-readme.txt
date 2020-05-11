@@ -162,6 +162,22 @@ Ref: http://git-scm.com/book/en/Git-on-the-Server-Setting-Up-the-Server
 git clone /e/Dropbox/Daniel/Projects/Lundin/git/CMP.git
 # and this will create the directory called CMP inside the working directory.
 
+In order to clone a repository that is on GitHub we should use the URL indicated in the GitHub repository under "Clone".
+
+NOTE: It is possible to know the size of the repository BEFORE cloning by running the GitHub API:
+	curl https://api.github.com/repos/[:organization]/[:repo]
+where [:organization] and [:repo] should be replaced with the actual organization/user name and the repository name respectively.
+Ex: I am organization = "mastropi" and I have a repo = "envnames".
+The above returns a JSON output where we can look for the keyword 'size' using grep. 
+Ex:
+	curl https://api.github.com/repos/MJeremy2017/Reinforcement-Learning-Implementation | grep -ni size
+The output size could be in either MB or kB depending on the size of the repository(!)
+
+If the repository is private we should first generate a token at https://github.com/settings/tokens and then use the token as in the following example:
+	curl -u git:[:token] https://api.github.com/repos/[:owner]/[:name] 2> /dev/null | grep size	
+
+Ref: https://stackoverflow.com/questions/8646517/see-the-size-of-a-github-repo-before-cloning-it
+
 
 3.- Commit changes locally
 --------------------------
@@ -221,6 +237,11 @@ git clone /e/Dropbox/Daniel/Projects/Lundin/git/CMP.git
 	# or we could do: (2017/10/31)
 	git pull --rebase origin master	# Ref: https://www.atlassian.com/git/tutorials/comparing-workflows
 	which avoids the generation of an intermediate MERGE commit that simply states that merge conflicts were resolved.
+	
+	NOTE: If we need to download a REMOTE branch that does NOT exist in the local repository, we can use the following checkout command:
+	git checkout --track origin/<remote-branch>
+	(I tested it today 08-Mar-2020 and it worked)
+	Ref: https://stackoverflow.com/questions/24301914/how-to-create-a-local-branch-from-an-existing-remote-branch
 
 2) Conflict may appear when doing the "git merge FETCH_HEAD". In order to resolve them we can use a merge tool by running:
 	git mergetool --tool=tortoisemerge
@@ -362,7 +383,7 @@ Ref: http://stackoverflow.com/questions/4114095/revert-to-previous-git-commit
 	https://www.atlassian.com/git/tutorials/undoing-changes
 	
 	***	REPOSITION (or "rebase" in my language) A BRANCH (very common task when we want to make master point to the currently working branch, e.g. daniel) ***
-	If I just need to reposition a branch (e.g. master branch) to a another commit, use git branch -f (e.g. git branch -f master test) (see also item (4) below).
+	If I just need to reposition a branch (e.g. master branch) to a another commit, use git branch -f (e.g. git branch -f master test) (see also item (4) below) (note that this also works to reposition to a remote branch --e.g. git branch -f master origin/master).
 	
 	UPDATE-2019/10/30: NOTE however that git-rebase is a VERY POWERFUL command in so much as it is called the Swiss Army Knife command (ref: webinar by Git Tower referenced at the top of this file delivered on 30-Oct-2019).
 
@@ -372,10 +393,12 @@ Ref: http://stackoverflow.com/questions/4114095/revert-to-previous-git-commit
 	Use:
 	git branch -f <branch> <new-tip-commit>
 	
-	where <new-tip-commit> can be a branch name or the hashcode referencing the branch.
+	where <new-tip-commit> can be a branch name or the hashcode referencing the branch, and can be a remote branch.
 	
 	Ex:
 	git branch -f master daniel
+	git branch -f master origin/master
+	(the second case is useful when e.g. we want to go BACK from master to an origin/master branch which is behind it --i.e. in the past)
 
 	Notes:
 	- option -f means "force". From the documentation:
